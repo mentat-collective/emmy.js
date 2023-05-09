@@ -3,9 +3,6 @@ const ts = require('gulp-typescript')
 const flatten = require('gulp-flatten')
 const  { exec } = require('child_process')
 
-const cljs_out = 'npm/src/js'
-
-
 function shadow(cmd, target, a) {
   const arg = a || ''
   return cb => {

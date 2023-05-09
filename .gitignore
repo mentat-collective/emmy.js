@@ -4,4 +4,3 @@ node_modules/
 .clj-kondo/.cache/
 .lsp/
 .shadow-cljs/
-src/out/

@@ -6,6 +6,7 @@ import './emmy.abstract.number.js';
 import './emmy.value.js';
 let core = require('./cljs.core.js');
 let generic = require('./emmy.generic.js')
+let value = require('./emmy.value.js')
 let emmy_function = require('./emmy.function.js')
 let abstract_function = require('./emmy.abstract.function.js')
 let lagrange = require('./emmy.mechanics.lagrange.js')
@@ -14,19 +15,62 @@ let derivative = require('./emmy.calculus.derivative.js')
 let render = require('./emmy.expression.render.js')
 let quadrature = require('./emmy.numerical.quadrature')
 let minimize = require('./emmy.numerical.minimize.js')
+let ode = require('./emmy.numerical.ode')
 
 console.log(lagrange);
 
 export class Emmy {
 
-    public up = structure.up
-    public down = structure.down
+    // TODO:
+    // 1. Consider whether make_es6_callable should live in structure? it
+    //    probably belongs in value.
+    // 2. Consider detecting structure nature in the result of generic
+    //    operations and decorating the return values of all the generic
+    //    ops. We can use an in-place metadata tag to store the application
+    //    of these properties to avoid doing it twice.
+    // 3. Rename make_es6_gettable to make_es6_indexable which is less uncouth
+    public up(...xs: any[]) {
+        return structure.make_es6_gettable(
+            value.make_es6_callable(
+                structure.up(...xs),
+                structure.make_es6_gettable))
+    }
+    public isUp(u: any): boolean {
+        return structure.up_QMARK_(u)
+    }
+    public isVector(v: any): boolean {``
+        return core.vector_QMARK_(v)
+    }
+    public down(...xs: any[]) {
+        return structure.make_es6_gettable(
+            value.make_es6_callable(
+                structure.down(...xs),
+                structure.make_es6_gettable))
+    }
     public add = generic._PLUS_
     public div = generic._SLASH_
+    public sub = generic._
+    public mul = generic._STAR_
+
     public mapr = structure.mapr
     public velocity = lagrange.velocity
     public toInfix = render.__GT_infix
     public Gamma = lagrange.Gamma
+    public time = lagrange.time
+    public coordinate = lagrange.coordinate
+    public stateAdvancer = ode.state_advancer
+    public flatten = core.flatten
+    public toJS = core.clj__GT_js
+    public osculatingPath = lagrange.osculating_path
+    public count = core.count
+
+    public solveLinear(a: any, b: any): any {
+        return generic.solve_linear.call(null, a, b)
+    }
+
+    public crossProduct(v: any, w: any): any {
+        return structure.make_es6_gettable(structure.cross_product(v, w))
+    }
 
     public minimize(f: any, x0: number, x1: number) {
         return core.clj__GT_js(minimize.minimize(f, x0, x1))
@@ -49,7 +93,7 @@ export class Emmy {
         // constructed polynomial object callable by interpolating make_es6_callable
         // into it construction path, or only using that process here in the JS
         // wrapper.
-        return structure.make_es6_callable(lagrange.make_path(t0, q0, t1, q1, qs))
+        return value.make_es6_callable(lagrange.make_path(t0, q0, t1, q1, qs), f=>f)
     }
     public dotProduct(u: any, v: any) {
         return generic.dot_product.call(null, u, v)
@@ -66,14 +110,12 @@ export class Emmy {
     //     return generic._PLUS_(...xs)
     // }
     public nth = core.nth
-    sub(...xs: any[]): any {
-        return generic._(...xs)
-    }
     eq(a: any, b: any): boolean {
-        return core._EQ_(a, b )
+        return core._EQ_(a, b)
     }
-    mul(...xs: any[]): any {
-        return generic._STAR_(...xs)
+    atan(y: any, x?: any) {
+        if (x === undefined) return generic.atan.call(null, y)
+        return generic.atan.call(null, y, x)
     }
     simplify(a: any): any {
         return generic.simplify.call(null, a)
@@ -81,11 +123,14 @@ export class Emmy {
     sin(a: any): any {
         return generic.sin.call(null, a)
     }
+    expt(a: any, b: any): any {
+        return generic.expt.call(null, a, b)
+    }
     cos(a: any): any {
         return generic.cos.call(null, a)
     }
     literalFunction(s: string): any {
-        return structure.make_es6_callable(abstract_function.literal_function(e.symbol(s)))
+        return value.make_es6_callable(abstract_function.literal_function(e.symbol(s)), x=>x)
     }
     partial(...ns: number[]): any {
         return (...xs: any[]) => derivative.partial(...ns).call(null, ...xs)
@@ -99,7 +144,10 @@ export class Emmy {
     LagrangeEquations(L: any): any {
         return lagrange.Lagrange_equations(L)
     }
-    make_es6_callable(x: any): any { return structure.make_es6_callable(x) }
+    LagrangianToEnergy(L: any): any {
+        return lagrange.Lagrangian__GT_energy(L)
+    }
+    make_es6_callable(x: any): any { return value.make_es6_callable(x) }
     square(v: any): any { return generic.square.call(null, v) }
     sqrt(v: any): any { return generic.sqrt.call(null, v) }
     print(x: any) {
