@@ -1,0 +1,10 @@
+{:deps {org.mentat/emmy {:local/root "/Users/colin/work/emmy"}
+        ;; See https://clojurians-log.clojureverse.org/shadow-cljs/2023-02-24/1677513365.621849
+        org.clojure/google-closure-library {:mvn/version "0.0-20230227-c7c0a541"}}
+
+ :source-paths ["cljs"]
+
+ :aliases {:cljs
+           {:extra-deps
+            {thheller/shadow-cljs {:mvn/version "2.20.14"}
+             org.clojure/clojurescript {:mvn/version "1.11.60"}}}}}

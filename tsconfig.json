@@ -1,0 +1,14 @@
+{
+    "files": [
+        "src/emmy.ts",
+        "src/emmyTest.ts"
+    ],
+
+    "compilerOptions": {
+        "allowJs": true,
+        "checkJs": false,
+        "noImplicitAny": false,
+        "outDir": "out"
+    },
+    "extends": "@tsconfig/node18/tsconfig.json"
+}

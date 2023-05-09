@@ -1,0 +1,13 @@
+{:deps {:aliases [:cljs]}
+
+ :builds {:dev {:compiler-options {:source-map false}
+                :modules {:base {:entries [emmy.env]}}
+                :target :npm-module
+                :output-dir "out"}}
+
+
+ :node {:compiler-options {:optimizations :advanced
+                           :source-map false}
+        :modules {:main {:entries [emmy.env]}}
+        :target :npm-module
+        :output-dir "out"}}}
