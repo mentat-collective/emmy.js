@@ -17,8 +17,6 @@ let quadrature = require('./emmy.numerical.quadrature')
 let minimize = require('./emmy.numerical.minimize.js')
 let ode = require('./emmy.numerical.ode')
 
-console.log(lagrange);
-
 export class Emmy {
 
     // TODO:
@@ -28,12 +26,11 @@ export class Emmy {
     //    operations and decorating the return values of all the generic
     //    ops. We can use an in-place metadata tag to store the application
     //    of these properties to avoid doing it twice.
-    // 3. Rename make_es6_gettable to make_es6_indexable which is less uncouth
     public up(...xs: any[]) {
-        return structure.make_es6_gettable(
+        return structure.make_es6_indexable(
             value.make_es6_callable(
                 structure.up(...xs),
-                structure.make_es6_gettable))
+                structure.make_es6_indexable))
     }
     public isUp(u: any): boolean {
         return structure.up_QMARK_(u)
@@ -42,10 +39,10 @@ export class Emmy {
         return core.vector_QMARK_(v)
     }
     public down(...xs: any[]) {
-        return structure.make_es6_gettable(
+        return structure.make_es6_indexable(
             value.make_es6_callable(
                 structure.down(...xs),
-                structure.make_es6_gettable))
+                structure.make_es6_indexable))
     }
     public add = generic._PLUS_
     public div = generic._SLASH_
@@ -69,7 +66,7 @@ export class Emmy {
     }
 
     public crossProduct(v: any, w: any): any {
-        return structure.make_es6_gettable(structure.cross_product(v, w))
+        return structure.make_es6_indexable(structure.cross_product(v, w))
     }
 
     public minimize(f: any, x0: number, x1: number) {
@@ -130,7 +127,7 @@ export class Emmy {
         return generic.cos.call(null, a)
     }
     literalFunction(s: string): any {
-        return value.make_es6_callable(abstract_function.literal_function(e.symbol(s)), x=>x)
+        return value.make_es6_callable(abstract_function.literal_function(this.symbol(s)), x=>x)
     }
     partial(...ns: number[]): any {
         return (...xs: any[]) => derivative.partial(...ns).call(null, ...xs)
@@ -167,5 +164,3 @@ export class Emmy {
         return f(...args)
     }
 }
-
-const e = new Emmy()

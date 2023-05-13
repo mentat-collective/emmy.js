@@ -1,4 +1,4 @@
-out/
+build/
 .cpcache/
 node_modules/
 .clj-kondo/.cache/

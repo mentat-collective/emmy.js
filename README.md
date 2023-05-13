@@ -32,6 +32,33 @@ The goals of this project are to support the use of Emmy with
 idiomatic JavaScript, and to deliver artifacts allowing Emmy to
 be composed with other JS packages using standard frontend techniques.
 
+JavaScript's arrow notation for functions combined with function
+argument destructuring provide a coding environment that's almost
+as pleasant as the original Clojure or Scheme. (One thing we can't
+do is overload operators. That leaves us with unpleasant functions
+like `add`, `sub`, `mul` and `div`, but practically everything
+else looks comprehensible in infix notation.) Here's an example from
+SICM chapter 1:
+
+```clojure
+(defn L-uniform-acceleration
+  "The Lagrangian of an object experiencing uniform acceleration
+  in the negative y direction, i.e. the acceleration due to gravity"
+  [m g]
+  (fn [[_ [_ y] v]]
+    (- (* (/ 1 2) m (g/square v)) (* m g y))))
+```
+
+```js
+const LUniformAcceleration = (m, g) => ([t, [x, y], v]) => e.sub(
+    e.mul(1 / 2, m, e.square(v)),
+    e.mul(m, g, y)
+)
+```
+
+Frankly the best practices for writing SICM-like code in straight
+JS are still evolving.
+
 ## Obstacles
 
 Since Emmy can be compiled with ClojureScript, you may ask, what more
@@ -85,35 +112,6 @@ did so, forcing the user to deal with (e.g.) warnings coming from the
 use of union types by making type assertions is foreign to the
 Emmy style as developed in Sussman and Wisdom's work.
 
-## Goals
-
-JavaScript's arrow notation for functions combined with function
-argument destructuring provide a coding environment that's almost
-as pleasant as the original Clojure or Scheme. (One thing we can't
-do is overload operators. That leaves us with unpleasant functions
-like `add`, `sub`, `mul` and `div`, but practically everything
-else looks comprehensible in infix notation.) Here's an example from
-SICM chapter 1:
-
-```clojure
-(defn L-uniform-acceleration
-  "The Lagrangian of an object experiencing uniform acceleration
-  in the negative y direction, i.e. the acceleration due to gravity"
-  [m g]
-  (fn [[_ [_ y] v]]
-    (- (* (/ 1 2) m (g/square v)) (* m g y))))
-```
-
-```js
-const LUniformAcceleration = (m, g) => ([t, [x, y], v]) => e.sub(
-    e.mul(1 / 2, m, e.square(v)),
-    e.mul(m, g, y)
-)
-```
-
-Frankly the best practices for writing SICM-like code in straight
-JS are still evolving.
-
 ## Build
 
 We use a gulpfile to arrange for the compilation of the emmy source
@@ -121,7 +119,7 @@ code and the transpilation of the TypeScript into JavaScript.
 
 Start the setup with `npm i` to install all the dependencies and
 development tools we use. Then `npx gulp` should arrange for all the
-assets to be built in the `out` directory.
+assets to be built in the `build` directory.
 
 If you want to develop simultaneously on both the `emmy` and `emmy.js`
 repositories, you can `npx gulp watch_cljs` to watch the Clojure side.

@@ -5,6 +5,10 @@ import 'mocha';
 
 const e = new Emmy()
 
+/**
+ * Add a chai predicate, emmyEqual, which is true when the
+ * objects are equal in the Clojure sense of `=`.
+ */
 Assertion.addMethod('emmyEqual', function (this: Chai.AssertionStatic, expected: any) {
     let obj = this._obj
     this!.assert(e.eq(obj, expected),
@@ -22,6 +26,14 @@ declare global {
 }
 
 describe('Emmy', () => {
+    /**
+     * pe - a `print-expression` for the unit test cases
+     * @param expr
+     * @returns the infix form of the simplified result.
+     *
+     * We regard the infix output as being the preferred form
+     * in the JavaScript case.
+     */
     const pe = (expr: any) => e.toInfix(e.simplify(expr))
 
     describe('works', () => {

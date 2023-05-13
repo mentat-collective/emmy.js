@@ -5,7 +5,7 @@ const  { exec } = require('child_process')
 
 function shadow(cmd, target, a) {
   const arg = a || ''
-  return cb => {
+  return function cljs(cb) {
     exec(
       `npx shadow-cljs ${cmd} ${target} ${arg}`,
       (error, stdout, stderr) => {
@@ -24,7 +24,7 @@ const tsp = ts.createProject('tsconfig.json')
 
 exports.tsc = tsc = () => {
   let result = tsp.src().pipe(tsp())
-  return result.js.pipe(flatten()).pipe(gulp.dest('out'))
+  return result.js.pipe(flatten()).pipe(gulp.dest('build'))
 }
 
 exports.default = gulp.series(cljs, tsc)

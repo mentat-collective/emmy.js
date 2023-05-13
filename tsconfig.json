@@ -8,7 +8,7 @@
         "allowJs": true,
         "checkJs": false,
         "noImplicitAny": false,
-        "outDir": "out"
+        "outDir": "build"
     },
     "extends": "@tsconfig/node18/tsconfig.json"
 }
