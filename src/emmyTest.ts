@@ -207,8 +207,8 @@ describe('Emmy', () => {
                 e.add(e.mul(2, t), 1)
             )
             expect(LagrangianAction(LFreeParticle(3.0), testPath, 0, 10.0)).to.equal(435)
-            const makeEta = (nu: any, t1: number, t2: number) => (t: any) => e.mul(e.sub(t, t1), e.sub(t, t2), nu(t))
-            const variedFreeParticleAction = (mass: number, q: any, nu: any, t1: number, t2: number) => (eps: number) => {
+            const makeEta = (nu, t1, t2) => t => e.mul(e.sub(t, t1), e.sub(t, t2), nu(t))
+            const variedFreeParticleAction = (mass, q, nu, t1, t2) => eps => {
                 const eta = makeEta(nu, t1, t2)
                 return LagrangianAction(LFreeParticle(mass), e.add(q, e.mul(eps, eta)), t1, t2)
             }
@@ -442,7 +442,7 @@ describe('Emmy', () => {
         describe('1.8 conserved quantities', () => {
             describe('1.8.3 central forces in three dimensions', () => {
                 const T3Spherical = m => ([t, [r, theta, phi], [rdot, thetadot, phidot]]) => e.mul(
-                    1/2, m, e.add(e.square(rdot), e.square(e.mul(r, thetadot)), e.square(e.mul(r, e.sin(theta), phidot)))
+                    1 / 2, m, e.add(e.square(rdot), e.square(e.mul(r, thetadot)), e.square(e.mul(r, e.sin(theta), phidot)))
                 )
                 const L3Central = (m, Vr) => {
                     const Vs = ([t, [r], dots]) => Vr(r)
@@ -479,7 +479,7 @@ describe('Emmy', () => {
                 })
             })
             describe('1.8.4 the restricted three-body problem', () => {
-                const L0 = (m, V) => ([t, q, v]) => e.sub(e.mul(1/2, m, e.square(v)), V(t, q))
+                const L0 = (m, V) => ([t, q, v]) => e.sub(e.mul(1 / 2, m, e.square(v)), V(t, q))
                 const V = (a, GM0, GM1, m) => (t, [x, y]) => {
                     const GMT = e.add(GM0, GM1)
                     const Omega = e.sqrt(e.div(GMT, e.expt(a, 3)))
@@ -500,19 +500,21 @@ describe('Emmy', () => {
                     const r0 = e.sqrt(e.add(e.square(e.add(x, a0)), e.square(y)))
                     const r1 = e.sqrt(e.add(e.square(e.sub(x, a1)), e.square(y)))
                     return e.add(
-                        e.mul(1/2, m, e.square(qdot)),
-                        e.mul(1/2, m, e.square(Omega), e.square(q)),
+                        e.mul(1 / 2, m, e.square(qdot)),
+                        e.mul(1 / 2, m, e.square(Omega), e.square(q)),
                         e.mul(m, Omega, e.sub(e.mul(x, ydot), e.mul(xdot, y))),
                         e.div(e.mul(GM0, m), r0),
                         e.div(e.mul(GM1, m), r1)
                     )
                 }
                 it('computes the energy', () => {
-                    e.withSymbols('a_0 a_1 Omega GM_0 GM_1 x_r y_r v_r^x v_r^y', (a0, a1, Omega, GM0, GM1, xr, yr, vrx, vry) => {
-                        expect(pe(e.LagrangianToEnergy(LR3B1(m, a0, a1, Omega, GM0, GM1))(e.up(t, e.up(xr, yr), e.up(vrx, vry))))).to.equal(
-                            '(- 0.5 Ω² m x_r² sqrt(a₀² a₁² - 2 a₀² a₁ x_r + a₀² x_r² + a₀² y_r² + 2 a₀ a₁² x_r - 4 a₀ a₁ x_r² + 2 a₀ x_r³ + 2 a₀ x_r y_r² + a₁² x_r² + a₁² y_r² - 2 a₁ x_r³ - 2 a₁ x_r y_r² + x_r⁴ + 2 x_r² y_r² + y_r⁴) - 0.5 Ω² m y_r² sqrt(a₀² a₁² - 2 a₀² a₁ x_r + a₀² x_r² + a₀² y_r² + 2 a₀ a₁² x_r - 4 a₀ a₁ x_r² + 2 a₀ x_r³ + 2 a₀ x_r y_r² + a₁² x_r² + a₁² y_r² - 2 a₁ x_r³ - 2 a₁ x_r y_r² + x_r⁴ + 2 x_r² y_r² + y_r⁴) + 0.5 m v_r^x² sqrt(a₀² a₁² - 2 a₀² a₁ x_r + a₀² x_r² + a₀² y_r² + 2 a₀ a₁² x_r - 4 a₀ a₁ x_r² + 2 a₀ x_r³ + 2 a₀ x_r y_r² + a₁² x_r² + a₁² y_r² - 2 a₁ x_r³ - 2 a₁ x_r y_r² + x_r⁴ + 2 x_r² y_r² + y_r⁴) + 0.5 m v_r^y² sqrt(a₀² a₁² - 2 a₀² a₁ x_r + a₀² x_r² + a₀² y_r² + 2 a₀ a₁² x_r - 4 a₀ a₁ x_r² + 2 a₀ x_r³ + 2 a₀ x_r y_r² + a₁² x_r² + a₁² y_r² - 2 a₁ x_r³ - 2 a₁ x_r y_r² + x_r⁴ + 2 x_r² y_r² + y_r⁴) - GM₀ m sqrt(a₁² - 2 a₁ x_r + x_r² + y_r²) - GM₁ m sqrt(a₀² + 2 a₀ x_r + x_r² + y_r²)) / sqrt(a₀² a₁² - 2 a₀² a₁ x_r + a₀² x_r² + a₀² y_r² + 2 a₀ a₁² x_r - 4 a₀ a₁ x_r² + 2 a₀ x_r³ + 2 a₀ x_r y_r² + a₁² x_r² + a₁² y_r² - 2 a₁ x_r³ - 2 a₁ x_r y_r² + x_r⁴ + 2 x_r² y_r² + y_r⁴)'
-                        )
-                    })
+                    e.withSymbols('a_0 a_1 Omega GM_0 GM_1 x_r y_r v_r^x v_r^y',
+                        (a0, a1, Omega, GM0, GM1, xr, yr, vrx, vry) => {
+                            const state = e.up(t, e.up(xr, yr), e.up(vrx, vry))
+                            expect(pe(e.LagrangianToEnergy(LR3B1(m, a0, a1, Omega, GM0, GM1))(state))).to.equal(
+                                '(- 0.5 Ω² m x_r² sqrt(a₀² a₁² - 2 a₀² a₁ x_r + a₀² x_r² + a₀² y_r² + 2 a₀ a₁² x_r - 4 a₀ a₁ x_r² + 2 a₀ x_r³ + 2 a₀ x_r y_r² + a₁² x_r² + a₁² y_r² - 2 a₁ x_r³ - 2 a₁ x_r y_r² + x_r⁴ + 2 x_r² y_r² + y_r⁴) - 0.5 Ω² m y_r² sqrt(a₀² a₁² - 2 a₀² a₁ x_r + a₀² x_r² + a₀² y_r² + 2 a₀ a₁² x_r - 4 a₀ a₁ x_r² + 2 a₀ x_r³ + 2 a₀ x_r y_r² + a₁² x_r² + a₁² y_r² - 2 a₁ x_r³ - 2 a₁ x_r y_r² + x_r⁴ + 2 x_r² y_r² + y_r⁴) + 0.5 m v_r^x² sqrt(a₀² a₁² - 2 a₀² a₁ x_r + a₀² x_r² + a₀² y_r² + 2 a₀ a₁² x_r - 4 a₀ a₁ x_r² + 2 a₀ x_r³ + 2 a₀ x_r y_r² + a₁² x_r² + a₁² y_r² - 2 a₁ x_r³ - 2 a₁ x_r y_r² + x_r⁴ + 2 x_r² y_r² + y_r⁴) + 0.5 m v_r^y² sqrt(a₀² a₁² - 2 a₀² a₁ x_r + a₀² x_r² + a₀² y_r² + 2 a₀ a₁² x_r - 4 a₀ a₁ x_r² + 2 a₀ x_r³ + 2 a₀ x_r y_r² + a₁² x_r² + a₁² y_r² - 2 a₁ x_r³ - 2 a₁ x_r y_r² + x_r⁴ + 2 x_r² y_r² + y_r⁴) - GM₀ m sqrt(a₁² - 2 a₁ x_r + x_r² + y_r²) - GM₁ m sqrt(a₀² + 2 a₀ x_r + x_r² + y_r²)) / sqrt(a₀² a₁² - 2 a₀² a₁ x_r + a₀² x_r² + a₀² y_r² + 2 a₀ a₁² x_r - 4 a₀ a₁ x_r² + 2 a₀ x_r³ + 2 a₀ x_r y_r² + a₁² x_r² + a₁² y_r² - 2 a₁ x_r³ - 2 a₁ x_r y_r² + x_r⁴ + 2 x_r² y_r² + y_r⁴)'
+                            )
+                        })
                 })
             })
         })

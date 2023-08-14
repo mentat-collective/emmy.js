@@ -154,7 +154,7 @@ export class Emmy {
         return core.symbol(s)
     }
     withSymbols(symbols: string, f: (...a: any[]) => any) {
-        const args = symbols.trim().split(/\s+/).map(x => {
+        const args = symbols.trim().split(/[\s,]+/).map(x => {
             if (x.endsWith('()')) {
                 return this.literalFunction(x.substring(0, x.length - 2))
             } else {

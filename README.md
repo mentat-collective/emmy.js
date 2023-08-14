@@ -90,7 +90,8 @@ from the Clojure side, but it is not so easy to go the other way.
 - Generally speaking, the printed form of an Emmy object in the Node
   REPL is not very useful. The results of `.toString()` are generally
   much better, but these are (naturally) presented in Clojure syntax.
-  For the test case library, we consider the composition of `->infix` and `simplify` to be the natural form of Emmy output in the JS setting,
+  For the test case library, we consider the composition of `->infix`
+  and `simplify` to be the natural form of Emmy output in the JS setting,
   and our test cases work with this representation instead of building
   expected values using clojure primitives.
 
