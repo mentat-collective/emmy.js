@@ -1,4 +1,4 @@
-{:deps {org.mentat/emmy {:local/root "/Users/colin/work/emmy"}
+{:deps {org.mentat/emmy {:mvn/version "0.31.0"}
         ;; See https://clojurians-log.clojureverse.org/shadow-cljs/2023-02-24/1677513365.621849
         org.clojure/google-closure-library {:mvn/version "0.0-20230227-c7c0a541"}}
 

@@ -3,4 +3,5 @@ build/
 node_modules/
 .clj-kondo/.cache/
 .lsp/
+.portal/
 .shadow-cljs/

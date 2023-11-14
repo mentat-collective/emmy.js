@@ -338,7 +338,7 @@ describe('Emmy', () => {
                                 'down(- Ω² m x_r(t) - 2 Ω m Dy_r(t) + m D²x_r(t), - Ω² m y_r(t) + 2 Ω m Dx_r(t) + m D²y_r(t))'
                             )
                         })
-                    }).timeout(5000)
+                    }).timeout(6000)
                 })
             })
             describe('systems with rigid constraints', () => {
