@@ -1,30 +1,16 @@
+const fs = require('node:fs/promises')
 const gulp = require('gulp')
-const ts = require('gulp-typescript')
-const flatten = require('gulp-flatten')
-const  { exec } = require('child_process')
+const  { spawn } = require('child_process')
 
-function shadow(cmd, target, a) {
-  const arg = a || ''
-  return function cljs(cb) {
-    exec(
-      `npx shadow-cljs ${cmd} ${target} ${arg}`,
-      (error, stdout, stderr) => {
-        stdout && console.log(stdout)
-        stderr && console.error(stderr)
-        error && console.error(error)
-        cb()
-      })
+function shadow(...args) {
+  return function shadow_cljs() {
+    return spawn('npx', ['shadow-cljs'].concat(args), { stdio: 'inherit' })
   }
 }
 
-exports.cljs = cljs = shadow('compile', ':dev')
-exports.watch_cljs = shadow('watch', ':dev', '--verbose')
+exports.clean = clean = () => fs.rm('build', { force: true, recursive: true })
+exports.watch = shadow('watch', ':emmy')
+exports.compile = compile = shadow('compile', ':emmy')
+exports.release = release = shadow('release', ':emmy')
 
-const tsp = ts.createProject('tsconfig.json')
-
-exports.tsc = tsc = () => {
-  let result = tsp.src().pipe(tsp())
-  return result.js.pipe(flatten()).pipe(gulp.dest('build'))
-}
-
-exports.default = gulp.series(cljs, tsc)
+exports.default = gulp.series(clean, release)

@@ -1,29 +1,18 @@
-import { equal } from 'assert';
-import { Emmy } from './emmy';
-import { Assertion, expect } from 'chai'
-import 'mocha';
-
-const e = new Emmy()
+const e = require('../build/emmy-library.js')
+const assert = require('assert').strict
+const {Assertion, expect} = require('chai')
 
 /**
  * Add a chai predicate, emmyEqual, which is true when the
  * objects are equal in the Clojure sense of `=`.
  */
-Assertion.addMethod('emmyEqual', function (this: Chai.AssertionStatic, expected: any) {
-    let obj = this._obj
-    this!.assert(e.eq(obj, expected),
+Assertion.addMethod('emmyEqual', function (t, expected) {
+    let obj = t._obj
+    assert(e.eq(obj, expected),
         `expected ${obj} and ${expected} to be equal in the Emmy sense`,
         `expected ${obj} and ${expected} not to be equal in the Emmy sense`,
         expected)
 })
-
-declare global {
-    module Chai {
-        interface Assertion {
-            emmyEqual(expected: any): void;
-        }
-    }
-}
 
 describe('Emmy', () => {
     /**
@@ -34,10 +23,15 @@ describe('Emmy', () => {
      * We regard the infix output as being the preferred form
      * in the JavaScript case.
      */
-    const pe = (expr: any) => e.toInfix(e.simplify(expr))
+    const pe = expr => e.to_infix(e.simplify(expr))
+    /**
+     * time is the Lagrangian time selector for local tuples. It merely
+     * extracts the initial entry.
+     */
+    const time = x => e.nth(x, 0)
 
     describe('works', () => {
-        e.withSymbols('x y', (x, y) => {
+        e.with_symbols('x y', (x, y) => {
             it('can add x and 1', () => {
                 expect(e.add(x, 1).toString()).to.equal("(+ x 1)")
             })
@@ -47,7 +41,7 @@ describe('Emmy', () => {
         })
     })
     describe('literal functions', () => {
-        const f = e.literalFunction('f')
+        const f = e.literal_function('f')
         const x = e.symbol('x')
         it('can be applied', () => {
             expect(pe(f(x))).to.equal('f(x)')
@@ -101,18 +95,18 @@ describe('Emmy', () => {
         describe('can map', () => {
             it('in one dimension', () => {
                 const u = e.up(4, 5, 6)
-                expect(u.map((x: number) => x + 1)).to.emmyEqual(e.up(5, 6, 7))
+                expect(u.map(x => x + 1)).to.emmyEqual(e.up(5, 6, 7))
             })
             it('in two dimensions', () => {
                 const u = e.down(e.up(1, 2), e.up(3, 4))
-                expect(u.map((x: number) => x * x)).to.emmyEqual(
+                expect(u.map(x => x * x)).to.emmyEqual(
                     e.down(e.up(1, 4), e.up(9, 16))
                 )
             })
         })
         describe('have expected properties', () => {
             it('up? is true', () => {
-                expect(e.isUp(u)).to.be.true
+                expect(e.up_p(u)).to.be.true
             })
         })
     })
@@ -128,22 +122,22 @@ describe('Emmy', () => {
         let L = e.sub(T, V);
         it('can apply T to symbolic arguments', () => {
             expect(
-                e.withSymbols('m t x v', (m, t, x, v) => T(m)([t, x, v])).toString()
+                e.with_symbols('m t x v', (m, t, x, v) => T(m)([t, x, v])).toString()
             ).to.equal('(* 0.5 m (expt v 2))');
         })
         it('can apply L to symbolic arguments (3)', () => {
             expect(
-                e.withSymbols('m t x v', (m, t, x, v) => L(m)([t, x, v])).toString()
+                e.with_symbols('m t x v', (m, t, x, v) => L(m)([t, x, v])).toString()
             ).to.equal('(* 0.5 m (expt v 2))');
         })
-        let sd = e.LagrangianToStateDerivative(L(e.symbol('m')))
+        let sd = e.Lagrangian_to_state_derivative(L(e.symbol('m')))
         it('can compute state derivative', () => {
-            e.withSymbols('t x v', (t, x, v) => {
+            e.with_symbols('t x v', (t, x, v) => {
                 expect(sd(e.up(t, x, v))).to.emmyEqual(e.up(1, v, 0))
             })
         })
         it('can compute a partial derivative', () => {
-            e.withSymbols('m t x v', (m, t, x, v) => {
+            e.with_symbols('m t x v', (m, t, x, v) => {
                 const Lm = L(m)
                 const state = e.up(t, x, v)
                 expect(e.simplify(e.partial(0)(Lm)(state))).to.equal(0)
@@ -153,10 +147,10 @@ describe('Emmy', () => {
         })
         it('can compute Lagrange equations', () => {
             const Lm = L(e.symbol('m'))
-            const x = e.literalFunction(e.symbol('x'))
+            const x = e.literal_function(e.symbol('x'))
             expect(
                 e.simplify(
-                    e.LagrangeEquations(Lm)(x)(e.symbol('t'))
+                    e.Lagrange_equations(Lm)(x)(e.symbol('t'))
                 ).toString(
                 )).to.equal('(* m (((expt D 2) x) t))')
         })
@@ -164,7 +158,7 @@ describe('Emmy', () => {
     describe("SICM chapter 1", () => {
         const LFreeParticle = mass => local => {
             const v = e.velocity(local)
-            return e.mul(1 / 2, mass, e.dotProduct(v, v))
+            return e.mul(1 / 2, mass, e.dot_product(v, v))
         }
         const LHarmonic = (m, k) => ([t, q, v]) => e.sub(
             e.mul(1 / 2, m, e.square(v)),
@@ -174,9 +168,9 @@ describe('Emmy', () => {
             e.mul(1 / 2, m, e.add(e.square(rdot), e.square(e.mul(r, phidot)))),
             V(r)
         )
-        const [m, t, k] = ['m', 't', 'k'].map(e.symbol)
+        const [m, t, k] = ['m', 't', 'k'].map(x => e.symbol(x))
         const FtoC = F => local => e.up(
-            e.time(local),
+            time(local),
             F(local),
             e.add(e.partial(0)(F)(local),
                 e.mul(e.partial(1)(F)(local),
@@ -185,9 +179,9 @@ describe('Emmy', () => {
 
         describe('1.4 Computing Actions', () => {
             const q = e.up(
-                e.literalFunction('x'),
-                e.literalFunction('y'),
-                e.literalFunction('z'))
+                e.literal_function('x'),
+                e.literal_function('y'),
+                e.literal_function('z'))
 
             it('computes Γ(q)(t)', () => {
                 expect(pe(e.Gamma(q)(t))).to.equal(
@@ -198,10 +192,10 @@ describe('Emmy', () => {
                     '0.5 m (Dx(t))² + 0.5 m (Dy(t))² + 0.5 m (Dz(t))²'
                 )
             })
-            function LagrangianAction(L: any, q: any, t1: number, t2: number) {
-                return e.definiteIntegral(e.compose(L, e.Gamma(q)), t1, t2)
+            function LagrangianAction(L, q, t1, t2) {
+                return e.definite_integral(e.compose(L, e.Gamma(q)), t1, t2)
             }
-            const testPath = (t: any) => e.up(
+            const testPath = t => e.up(
                 e.add(e.mul(4, t), 7),
                 e.add(e.mul(3, t), 5),
                 e.add(e.mul(2, t), 1)
@@ -224,17 +218,17 @@ describe('Emmy', () => {
                 expect(minResult.result).to.be.closeTo(0, 1e-7)
             })
 
-            function parametricPathAction(Lagrangian: any, t0: number, q0: number[], t1: number, q1: number[]) {
-                return (qs: any) => {
-                    const path = e.makePath(t0, q0, t1, q1, qs)
+            function parametricPathAction(Lagrangian, t0, q0, t1, q1) {
+                return qs => {
+                    const path = e.make_path(t0, q0, t1, q1, qs)
                     return LagrangianAction(Lagrangian, path, t0, t1)
                 }
             }
 
-            function findPath(Lagrangian: any, t0: number, q0: any, t1: number, q1: any, n: number) {
-                const initialQs = e.linearInterpolants(q0, q1, n)
-                const minimizingQs = e.multidimensionalMinimize(parametricPathAction(Lagrangian, t0, q0, t1, q1), initialQs)
-                return e.makePath(t0, q0, t1, q1, minimizingQs)
+            function findPath(Lagrangian, t0, q0, t1, q1, n) {
+                const initialQs = e.linear_interpolants(q0, q1, n)
+                const minimizingQs = e.multidimensional_minimize(parametricPathAction(Lagrangian, t0, q0, t1, q1), initialQs)
+                return e.make_path(t0, q0, t1, q1, minimizingQs)
             }
 
             it('can find a minimal parametric path', () => {
@@ -243,35 +237,35 @@ describe('Emmy', () => {
             })
         })
         describe('1.5 The Euler Lagrange Equations', () => {
-            const generalTestPath = (t: any) => e.withSymbols('a a_0 b b_0 c c_0', (a, a_0, b, b_0, c, c_0) =>
+            const generalTestPath = t => e.with_symbols('a a_0 b b_0 c c_0', (a, a_0, b, b_0, c, c_0) =>
                 e.up(
                     e.add(e.mul(a, t), a_0),
                     e.add(e.mul(b, t), b_0),
                     e.add(e.mul(c, t), c_0)))
 
             it('can compute L equations for general test path', () => {
-                expect(pe(e.LagrangeEquations(LFreeParticle(m))(generalTestPath)(t))).to.equal('down(0, 0, 0)')
+                expect(pe(e.Lagrange_equations(LFreeParticle(m))(generalTestPath)(t))).to.equal('down(0, 0, 0)')
             })
             it('can compute L equations with literal function', () => {
-                expect(pe(e.LagrangeEquations(LFreeParticle(m))(e.literalFunction('x'))(t))).to.equal('m D²x(t)')
+                expect(pe(e.Lagrange_equations(LFreeParticle(m))(e.literal_function('x'))(t))).to.equal('m D²x(t)')
             })
             it('can solve given a proposed solution', () => {
-                const proposedSolution = e.withSymbols('A omega phi',
+                const proposedSolution = e.with_symbols('A omega phi',
                     (A, omega, phi) =>
-                        (t: any) => e.mul(A, e.cos(e.add(e.mul(omega, t), phi))))
+                        t => e.mul(A, e.cos(e.add(e.mul(omega, t), phi))))
 
-                expect(pe(e.LagrangeEquations(LHarmonic(m, k))(proposedSolution)(t))).to.equal(
+                expect(pe(e.Lagrange_equations(LHarmonic(m, k))(proposedSolution)(t))).to.equal(
                     '- A m ω² cos(ω t + φ) + A k cos(ω t + φ)')
             })
             it('Exercise 1.11: Kepler\'s third law', () => {
                 const gravitationalEnergy = (G, m1, m2) => r => e.sub(e.div(e.mul(G, m1, m2), r))
                 const circle = t => e.up(e.symbol('a'), e.mul(e.symbol('n'), t))
-                const lagrangianReduced = e.withSymbols('G M_1 m_2', (G, M1, m2) =>
+                const lagrangianReduced = e.with_symbols('G M_1 m_2', (G, M1, m2) =>
                     LKeplerCentralPolar(
                         e.div(e.mul(M1, m2), e.add(M1, m2)),
                         gravitationalEnergy(G, M1, m2)))
 
-                expect(pe(e.LagrangeEquations(lagrangianReduced)(circle)(t))).to.equal(
+                expect(pe(e.Lagrange_equations(lagrangianReduced)(circle)(t))).to.equal(
                     'down((- M₁ a³ m₂ n² + G M₁² m₂ + G M₁ m₂²) / (M₁ a² + a² m₂), 0)')
             })
         })
@@ -281,8 +275,8 @@ describe('Emmy', () => {
                 e.mul(m, g, y)
             )
             it('can find L.E. for uniform acceleration', () => {
-                e.withSymbols('m g x() y() U()', (m, g, x, y, U) => {
-                    expect(pe(e.LagrangeEquations(LUniformAcceleration(m, g))(e.up(x, y))(t))).to.equal(
+                e.with_symbols('m g x() y() U()', (m, g, x, y, U) => {
+                    expect(pe(e.Lagrange_equations(LUniformAcceleration(m, g))(e.up(x, y))(t))).to.equal(
                         'down(m D²x(t), g m + m D²y(t))')
                 })
             })
@@ -292,14 +286,14 @@ describe('Emmy', () => {
             )
             describe('it can find Lagrange equations for central force', () => {
                 it('in rectangular coordinates', () => {
-                    e.withSymbols('m x() y() U()', (m, x, y, U) => {
-                        expect(pe(e.LagrangeEquations(LCentralRectangular(m, U))(e.up(x, y))(t))).to.equal(
+                    e.with_symbols('m x() y() U()', (m, x, y, U) => {
+                        expect(pe(e.Lagrange_equations(LCentralRectangular(m, U))(e.up(x, y))(t))).to.equal(
                             'down((m D²x(t) sqrt((x(t))² + (y(t))²) + x(t) DU(sqrt((x(t))² + (y(t))²))) / sqrt((x(t))² + (y(t))²), (m D²y(t) sqrt((x(t))² + (y(t))²) + y(t) DU(sqrt((x(t))² + (y(t))²))) / sqrt((x(t))² + (y(t))²))')
                     })
                 })
                 it('in polar coordinates', () => {
-                    e.withSymbols('m r() phi() U()', (m, r, phi, U) => {
-                        expect(pe(e.LagrangeEquations(LKeplerCentralPolar(m, U))(e.up(r, phi))(t))).to.equal(
+                    e.with_symbols('m r() phi() U()', (m, r, phi, U) => {
+                        expect(pe(e.Lagrange_equations(LKeplerCentralPolar(m, U))(e.up(r, phi))(t))).to.equal(
                             'down(- m r(t) (Dφ(t))² + m D²r(t) + DU(r(t)), m (r(t))² D²φ(t) + 2 m r(t) Dφ(t) Dr(t))'
                         )
                     })
@@ -310,7 +304,7 @@ describe('Emmy', () => {
                     const [x, y] = X
                     return e.up(e.sqrt(e.square(X)), e.atan(y, x))
                 }
-                e.withSymbols('r phi rdot phidot U()', (r, phi, rdot, phidot, U) => {
+                e.with_symbols('r phi rdot phidot U()', (r, phi, rdot, phidot, U) => {
                     const local = e.up(t, e.up(r, phi), e.up(rdot, phidot))
                     it('can compute polar velocity', () => {
                         expect(pe(e.velocity(FtoC(PtoR)(local)))).to.equal('up(- phidot r sin(φ) + rdot cos(φ), phidot r cos(φ) + rdot sin(φ))')
@@ -327,14 +321,14 @@ describe('Emmy', () => {
                     const LRotatingPolar = (m, Omega) => e.compose(LFreePolar(m), FtoC(F(Omega)))
                     const LRotatingRectangular = (m, Omega) => e.compose(LRotatingPolar(m, Omega), FtoC(RtoP))
                     it('can compute rotating rectangular Lagrangian', () => {
-                        e.withSymbols('Omega x_r y_r xdot_r ydot_r', (Omega, x_r, y_r, xdot_r, ydot_r) => {
+                        e.with_symbols('Omega x_r y_r xdot_r ydot_r', (Omega, x_r, y_r, xdot_r, ydot_r) => {
                             expect(pe(LRotatingRectangular(m, Omega)(e.up(t, e.up(x_r, y_r), e.up(xdot_r, ydot_r))))).to.equal(
                                 '0.5 Ω² m x_r² + 0.5 Ω² m y_r² + Ω m x_r ydot_r - Ω m xdot_r y_r + 0.5 m xdot_r² + 0.5 m ydot_r²')
                         })
                     })
                     it('can compute L.E. for rotating rectangular', () => {
-                        e.withSymbols('m Omega x_r() y_r()', (m, Omega, x_r, y_r) => {
-                            expect(pe(e.LagrangeEquations(LRotatingRectangular(m, Omega))(e.up(x_r, y_r))(t))).to.equal(
+                        e.with_symbols('m Omega x_r() y_r()', (m, Omega, x_r, y_r) => {
+                            expect(pe(e.Lagrange_equations(LRotatingRectangular(m, Omega))(e.up(x_r, y_r))(t))).to.equal(
                                 'down(- Ω² m x_r(t) - 2 Ω m Dy_r(t) + m D²x_r(t), - Ω² m y_r(t) + 2 Ω m Dx_r(t) + m D²y_r(t))'
                             )
                         })
@@ -354,8 +348,8 @@ describe('Emmy', () => {
                     const VPend = (m, l, g, ys) => ([t, theta, thetadot]) => e.mul(m, g, e.sub(ys(t), e.mul(l, e.cos(theta))))
                     const LPend = e.sub(TPend, VPend)
                     it('can compute L.E.', () => {
-                        e.withSymbols('m l g ys() theta()', (m, l, g, ys, theta) => {
-                            expect(pe(e.LagrangeEquations(LPend(m, l, g, ys))(theta)(t))).to.equal(
+                        e.with_symbols('m l g ys() theta()', (m, l, g, ys, theta) => {
+                            expect(pe(e.Lagrange_equations(LPend(m, l, g, ys))(theta)(t))).to.equal(
                                 'g l m sin(θ(t)) + l² m D²θ(t) + l m sin(θ(t)) D²ys(t)'
                             )
                         })
@@ -366,7 +360,7 @@ describe('Emmy', () => {
                             e.sub(y_s(t), e.mul(l, e.cos(theta)))
                         )
                         const LPend = (m, l, g, y_s) => e.compose(LUniformAcceleration(m, g), FtoC(dpCoordinates(l, y_s)))
-                        e.withSymbols('m l g y_s() theta thetadot', (m, l, g, y_s, theta, thetadot) => {
+                        e.with_symbols('m l g y_s() theta thetadot', (m, l, g, y_s, theta, thetadot) => {
                             expect(pe(LPend(m, l, g, y_s)(e.up(t, theta, thetadot)))).to.equal(
                                 '0.5 l² m thetadot² + l m thetadot sin(θ) Dy_s(t) + g l m cos(θ) - g m y_s(t) + 0.5 m (Dy_s(t))²'
                             )
@@ -376,18 +370,18 @@ describe('Emmy', () => {
                         const LagrangianToAcceleration = L => {
                             const P = e.partial(2)(L)
                             const F = e.partial(1)(L)
-                            return e.solveLinear(
+                            return e.solve_linear(
                                 e.partial(2)(P),
                                 e.sub(F, e.add(e.partial(0)(P)), e.mul(e.partial(1)(P), e.velocity))
                             )
                         }
-                        const LagrangianToStateDerivative = L => {
+                        const Lagrangian_to_state_derivative = L => {
                             const acceleration = LagrangianToAcceleration(L)
                             return state => e.up(1, e.velocity(state), acceleration(state))
                         }
-                        const harmonicStateDerivative = (m, k) => LagrangianToStateDerivative(LHarmonic(m, k))
+                        const harmonicStateDerivative = (m, k) => Lagrangian_to_state_derivative(LHarmonic(m, k))
                         it('can compute harmonic state derivative', () => {
-                            e.withSymbols('m k x y v_x v_y', (m, k, x, y, v_x, v_y) => {
+                            e.with_symbols('m k x y v_x v_y', (m, k, x, y, v_x, v_y) => {
                                 expect(pe(harmonicStateDerivative(m, k)(e.up(t, e.up(x, y), e.up(v_x, v_y))))).to.equal(
                                     'up(1, up(v_x, v_y), up(- k x / m, - k y / m))'
                                 )
@@ -397,19 +391,19 @@ describe('Emmy', () => {
                             const qvToStatePath = (q, v) => t => e.up(t, q(t), v(t))
                             const LagrangeEquationsFirstOrder = L => (q, v) => {
                                 const statePath = qvToStatePath(q, v)
-                                return e.sub(e.D(statePath), e.compose(LagrangianToStateDerivative(L), statePath))
+                                return e.sub(e.D(statePath), e.compose(Lagrangian_to_state_derivative(L), statePath))
                             }
-                            e.withSymbols('x() y() v_x() v_y()', (x, y, v_x, v_y) => {
+                            e.with_symbols('x() y() v_x() v_y()', (x, y, v_x, v_y) => {
                                 expect(pe(LagrangeEquationsFirstOrder(LHarmonic(m, k))(e.up(x, y), e.up(v_x, v_y))(t))).to.equal(
                                     'up(0, up(Dx(t) - v_x(t), Dy(t) - v_y(t)), up((k x(t) + m Dv_x(t)) / m, (k y(t) + m Dv_y(t)) / m))'
                                 )
                             })
                         })
                         it('can integrate numerically', () => {
-                            const s = e.stateAdvancer(harmonicStateDerivative, 2, 1)(e.up(1, e.up(1, 2), e.up(3, 4)), 10, 1e-12)
+                            const s = e.state_advancer(harmonicStateDerivative, 2, 1)(e.up(1, e.up(1, 2), e.up(3, 4)), 10, 1e-12)
                             const expected = e.up(11, e.up(3.712791664, 5.420620823), e.up(1.614803092, 1.818910372))
                             const d = e.sub(s, expected)
-                            expect(Math.max(...e.toJS(e.flatten(d)).map(Math.abs))).to.be.lessThan(1e-7)
+                            expect(Math.max(...e.clj_to_js(e.flatten(d)).map(Math.abs))).to.be.lessThan(1e-7)
                         })
                     })
                     describe('can solve periodically driven pendulum', () => {
@@ -419,17 +413,17 @@ describe('Emmy', () => {
                             return LPend(m, l, g, ys)
                         }
                         it('can find L.E. for driven pendulum', () => {
-                            e.withSymbols('l g A omega theta()', (l, g, A, omega, theta) => {
-                                expect(pe(e.LagrangeEquations(LPeriodicallyDrivenPendulum(m, l, g, A, omega))(theta)(t))).to.equal(
+                            e.with_symbols('l g A omega theta()', (l, g, A, omega, theta) => {
+                                expect(pe(e.Lagrange_equations(LPeriodicallyDrivenPendulum(m, l, g, A, omega))(theta)(t))).to.equal(
                                     '- A l m ω² sin(θ(t)) cos(ω t) + g l m sin(θ(t)) + l² m D²θ(t)'
                                 )
                             })
                         })
                         it('can find the state derivative', () => {
-                            const pendStateDerivative = (m, l, g, A, omega) => e.LagrangianToStateDerivative(
+                            const pendStateDerivative = (m, l, g, A, omega) => e.Lagrangian_to_state_derivative(
                                 LPeriodicallyDrivenPendulum(m, l, g, A, omega)
                             )
-                            e.withSymbols('l g A omega theta thetadot', (l, g, A, omega, theta, thetadot) => {
+                            e.with_symbols('l g A omega theta thetadot', (l, g, A, omega, theta, thetadot) => {
                                 expect(pe(pendStateDerivative(m, l, g, A, omega)(e.up(t, theta, thetadot)))).to.equal(
                                     'up(1, thetadot, (A ω² sin(θ) cos(ω t) - g sin(θ)) / l)'
                                 )
@@ -448,7 +442,7 @@ describe('Emmy', () => {
                     const Vs = ([t, [r], dots]) => Vr(r)
                     return e.sub(T3Spherical(m), Vs)
                 }
-                e.withSymbols('r theta phi rdot thetadot phidot V()', (r, theta, phi, rdot, thetadot, phidot, V) => {
+                e.with_symbols('r theta phi rdot thetadot phidot V()', (r, theta, phi, rdot, thetadot, phidot, V) => {
                     const state = e.up(t, e.up(r, theta, phi), e.up(rdot, thetadot, phidot))
                     it('can compute partial 1', () => {
                         expect(pe(e.partial(1)(L3Central(m, V))(state))).to.equal(
@@ -461,7 +455,7 @@ describe('Emmy', () => {
                         )
                     })
                     it('can compute angular momentum about z axis', () => {
-                        const angMomZ = m => ([t, xyz, v]) => e.crossProduct(xyz, e.mul(m, v))[2]
+                        const angMomZ = m => ([t, xyz, v]) => e.cross_product(xyz, e.mul(m, v))[2]
                         const StoR = ([t, [r, theta, phi], dots]) => e.up(
                             e.mul(r, e.sin(theta), e.cos(phi)),
                             e.mul(r, e.sin(theta), e.sin(phi)),
@@ -472,7 +466,7 @@ describe('Emmy', () => {
                         )
                     })
                     it('can compute energy for the system', () => {
-                        expect(pe(e.LagrangianToEnergy(L3Central(m, V))(state))).to.equal(
+                        expect(pe(e.Lagrangian_to_energy(L3Central(m, V))(state))).to.equal(
                             '0.5 m phidot² r² sin²(θ) + 0.5 m r² thetadot² + 0.5 m rdot² + V(r)'
                         )
                     })
@@ -508,10 +502,10 @@ describe('Emmy', () => {
                     )
                 }
                 it('computes the energy', () => {
-                    e.withSymbols('a_0 a_1 Omega GM_0 GM_1 x_r y_r v_r^x v_r^y',
+                    e.with_symbols('a_0 a_1 Omega GM_0 GM_1 x_r y_r v_r^x v_r^y',
                         (a0, a1, Omega, GM0, GM1, xr, yr, vrx, vry) => {
                             const state = e.up(t, e.up(xr, yr), e.up(vrx, vry))
-                            expect(pe(e.LagrangianToEnergy(LR3B1(m, a0, a1, Omega, GM0, GM1))(state))).to.equal(
+                            expect(pe(e.Lagrangian_to_energy(LR3B1(m, a0, a1, Omega, GM0, GM1))(state))).to.equal(
                                 '(- 0.5 Ω² m x_r² sqrt(a₀² a₁² - 2 a₀² a₁ x_r + a₀² x_r² + a₀² y_r² + 2 a₀ a₁² x_r - 4 a₀ a₁ x_r² + 2 a₀ x_r³ + 2 a₀ x_r y_r² + a₁² x_r² + a₁² y_r² - 2 a₁ x_r³ - 2 a₁ x_r y_r² + x_r⁴ + 2 x_r² y_r² + y_r⁴) - 0.5 Ω² m y_r² sqrt(a₀² a₁² - 2 a₀² a₁ x_r + a₀² x_r² + a₀² y_r² + 2 a₀ a₁² x_r - 4 a₀ a₁ x_r² + 2 a₀ x_r³ + 2 a₀ x_r y_r² + a₁² x_r² + a₁² y_r² - 2 a₁ x_r³ - 2 a₁ x_r y_r² + x_r⁴ + 2 x_r² y_r² + y_r⁴) + 0.5 m v_r^x² sqrt(a₀² a₁² - 2 a₀² a₁ x_r + a₀² x_r² + a₀² y_r² + 2 a₀ a₁² x_r - 4 a₀ a₁ x_r² + 2 a₀ x_r³ + 2 a₀ x_r y_r² + a₁² x_r² + a₁² y_r² - 2 a₁ x_r³ - 2 a₁ x_r y_r² + x_r⁴ + 2 x_r² y_r² + y_r⁴) + 0.5 m v_r^y² sqrt(a₀² a₁² - 2 a₀² a₁ x_r + a₀² x_r² + a₀² y_r² + 2 a₀ a₁² x_r - 4 a₀ a₁ x_r² + 2 a₀ x_r³ + 2 a₀ x_r y_r² + a₁² x_r² + a₁² y_r² - 2 a₁ x_r³ - 2 a₁ x_r y_r² + x_r⁴ + 2 x_r² y_r² + y_r⁴) - GM₀ m sqrt(a₁² - 2 a₁ x_r + x_r² + y_r²) - GM₁ m sqrt(a₀² + 2 a₀ x_r + x_r² + y_r²)) / sqrt(a₀² a₁² - 2 a₀² a₁ x_r + a₀² x_r² + a₀² y_r² + 2 a₀ a₁² x_r - 4 a₀ a₁ x_r² + 2 a₀ x_r³ + 2 a₀ x_r y_r² + a₁² x_r² + a₁² y_r² - 2 a₁ x_r³ - 2 a₁ x_r y_r² + x_r⁴ + 2 x_r² y_r² + y_r⁴)'
                             )
                         })
@@ -519,7 +513,7 @@ describe('Emmy', () => {
             })
         })
         describe('1.9 abstraction of path functions', () => {
-            const GammaBar = fBar => local => fBar(e.osculatingPath(local))(e.time(local))
+            const GammaBar = fBar => local => fBar(e.osculating_path(local))(time(local))
             const FtoC1 = F => local => {
                 const n = local.length
                 const fBar = qPrime => {
@@ -529,7 +523,7 @@ describe('Emmy', () => {
                 return GammaBar(fBar)(local)
             }
             it('computes the path', () => {
-                e.withSymbols('r theta rdot thetadot', (r, theta, rdot, thetadot) => {
+                e.with_symbols('r theta rdot thetadot', (r, theta, rdot, thetadot) => {
                     expect(pe(FtoC1(PtoR)(e.up(t, e.up(r, theta), e.up(rdot, thetadot))))).to.equal(
                         'up(t, up(r cos(θ), r sin(θ)), up(- r thetadot sin(θ) + rdot cos(θ), r thetadot cos(θ) + rdot sin(θ)))'
                     )
@@ -545,14 +539,14 @@ describe('Emmy', () => {
                 return GammaBar(DFonPath)(state)
             }
             const EulerLagrangeOperator = L => e.sub(Dt(e.partial(2)(L)), e.partial(1)(L))
-            e.withSymbols('x v a', (x, v, a) => {
+            e.with_symbols('x v a', (x, v, a) => {
                 it('EL operator can apply to LHarmonic', () => {
                     expect(pe(EulerLagrangeOperator(LHarmonic(m, k))(e.up(t, x, v, a)))).to.equal(
                         'a m + k x'
                     )
                 })
             })
-            e.withSymbols('x()', (x) => {
+            e.with_symbols('x()', (x) => {
                 it('EL operator can compose with Gamma', () => {
                     expect(pe(e.compose(EulerLagrangeOperator(LHarmonic(m, k)), e.Gamma(x, 4))(t))).to.equal(
                         'k x(t) + m D²x(t)'

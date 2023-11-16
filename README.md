@@ -3,24 +3,13 @@
 
 ## Warning
 
-This isn't live yet. The code needed to support this is not yet
-checked in to the Emmy library, so there's no version we can point
-to that will work as a basis. The `deps.edn` file currently points
-to a local repository on my machine; if you want to try this before
-it ships you'll have to check out the `emmy` branch
-`littleredcomputer/js-build` and point your `local/root` target
-to your checkout in `deps.edn`.
-
-Since we don't have an emmy version yet, I haven't written the gulp
-tasks to npm publish yet.
-
 The library is not yet complete even in an initial sense: I have
 flood-filled the things that are required to do what is
 done [here](https://kloimhardt.github.io/blog/html/sicmutils-as-js-book-part1.html)
 in natural JS syntax, but there are many functions in Emmy that are
 as yet unwrapped.
 
-For the present, I invite you to consider the test case file `emmyTest.ts`
+For the present, I invite you to consider the test case file `emmyTest.js`
 to be the current state of the art for the recommended use of the library.
 At present, it contains most of what is in Chapter 1 of SICM with very
 little compromise in the source code.
@@ -68,7 +57,7 @@ from the Clojure side, but it is not so easy to go the other way.
 - Many things that look like functions in Emmy aren't callable in
   JavaScript directly (generic functions like +, -). Functions with
   punctuation in their names get replaced with unsightly names like
-  `__GT_infix`. The wrapper library fixes this issues.
+  `__GT_infix`. The wrapper library fixes these issues.
 
 - We provide a means of repackaging Emmy structures so that they can
   be indexed like arrays, can destructure into JS argument lists, and
@@ -80,12 +69,21 @@ from the Clojure side, but it is not so easy to go the other way.
   of several symbols in a scoped context:
 
   ```js
-  e.withSymbols('x y V()', (x, y, V) => {
+  e.with_symbols('x y V()', (x, y, V) => {
     // within this scope, x and y are symbols, and V is a
     // literal function (since we appended parentheses to the
     // name in the symbol name list).
   })
   ```
+- Symbol renaming conventions:
+
+  - `->foo` becomes `to_foo`
+  - `foo->bar` becomes `foo_to_bar`
+  - `foo!` becomes `foo_now`
+  - `-foo` becomes `minus_foo`
+  - `foo-bar` becomes `foo_bar`
+  - `foo:bar` becomes `foo_bar` (as well)
+  - `foo?` becomes `foo_p`
 
 - Generally speaking, the printed form of an Emmy object in the Node
   REPL is not very useful. The results of `.toString()` are generally
@@ -95,37 +93,9 @@ from the Clojure side, but it is not so easy to go the other way.
   and our test cases work with this representation instead of building
   expected values using clojure primitives.
 
-## Yes, implicit `any`
-
-Setting `noImplicitAny: false` in the `tsconfig.json` file is
-frowned upon, but in my (present) judgment it is the correct
-choice for this library. Because Emmy is architected around
-generic functions, the signature of most library functions is
-`(...any[]): any`. Nothing wrong with that, but when you are writing
-your own functions, especially with arrow notation, being
-badgered by the linter to append `:any` to each and every function
-argument is annoying.
-
-Many emmy functions could be given stronger types. But it is
-not obvious to me how to represent the way that Emmy accounts
-for objects' types in TypeScript's type language. Even if we
-did so, forcing the user to deal with (e.g.) warnings coming from the
-use of union types by making type assertions is foreign to the
-Emmy style as developed in Sussman and Wisdom's work.
-
 ## Build
 
-We use a gulpfile to arrange for the compilation of the emmy source
-code and the transpilation of the TypeScript into JavaScript.
+TLDR: `npm i && npx gulp && npm test`
 
-Start the setup with `npm i` to install all the dependencies and
-development tools we use. Then `npx gulp` should arrange for all the
-assets to be built in the `build` directory.
-
-If you want to develop simultaneously on both the `emmy` and `emmy.js`
-repositories, you can `npx gulp watch_cljs` to watch the Clojure side.
-To watch the TypeScript side, I use the `tsc watch` command from
-within VS code. If you want to hack the JS without VS Code let me know
-and I can add a watcher for the TS compiler that gulp could start,
-but the watcher and linting features of VS code for TypeScript are
-pretty compelling, so I recommend starting there.
+You can use `npx gulp watch` to run shadow-cljs in watch mode,
+while working on the ClojureScript code.

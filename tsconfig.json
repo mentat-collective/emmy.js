@@ -5,6 +5,7 @@
     ],
 
     "compilerOptions": {
+	"module": "node16",
         "allowJs": true,
         "checkJs": false,
         "noImplicitAny": false,
