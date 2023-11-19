@@ -1,4 +1,4 @@
-const e = require('../build/emmy-library.js')
+const e = require('../build/Emmy.js')
 const assert = require('assert').strict
 const {Assertion, expect} = require('chai')
 

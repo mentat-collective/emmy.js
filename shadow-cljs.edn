@@ -6,5 +6,5 @@
                  ; of the env data structure somewhere, and add back the
                  ; stuff from "core" that we really need.
                  :exports-fn emmy.js.main/emmy-js-exports
-                 :output-to "build/emmy-library.js"
+                 :output-to "build/Emmy.js"
                  :output-dir "build"}}}

@@ -1,8 +1,8 @@
 {
-  "name": "emmy.js",
+  "name": "emmy-js",
   "version": "0.1.0-SNAPSHOT",
   "description": "JS assets for using the Emmy computer algebra system",
-  "entry_point": "build/emmy.js",
+  "main": "build/Emmy.js",
   "files": [
     "build/**"
   ],
