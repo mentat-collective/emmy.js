@@ -95,7 +95,7 @@ from the Clojure side, but it is not so easy to go the other way.
 
 ## Build
 
-TLDR: `npm i && npx gulp && npm test`
+TLDR: `npm i && npm run release && npm test`
 
-You can use `npx gulp watch` to run shadow-cljs in watch mode,
+You can use `npm run watch` to run shadow-cljs in watch mode,
 while working on the ClojureScript code.
